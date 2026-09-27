@@ -6,8 +6,8 @@ Etupirka 会老老实实记下你每天玩了多久，却没有任何导出功�
 `user.db`，把每条记录变成 Vnite 能直接导入的 JSON —— **点一下「复制」，切到 Vnite 粘贴保存**，
 就迁完了。
 
-> 只支持 Windows。运行时**零第三方依赖**（Python 标准库 + tkinter），也有打包好的
-> 单文件 exe，双击即用。
+> 只支持 Windows。运行时**零第三方依赖**（Python 标准库 + tkinter）。
+> 不想装 Python 就直接下 [Releases](../../releases) 里的发布包，解压即用。
 
 ---
 
@@ -25,13 +25,18 @@ Etupirka 的 `user.db` 全程以只读方式打开，不会被修改，也不会
 
 ## 快速开始
 
-### 1. 拿一个 exe
+### 1. 拿一份程序
+
+到 [Releases](../../releases) 下载 `etupirka2vnite-<版本>-win64.zip`，
+**完整解压**后双击里面的：
 
 ```
-dist\etupirka2vnite.exe
+etupirka2vnite\etupirka2vnite.exe
 ```
 
-放在哪都行。双击运行。
+> 整个文件夹要一起保留，exe 依赖同目录下的运行库文件。
+> 想放桌面就右键 exe → 发送到 → 桌面快捷方式。配置存在 exe 同级目录，
+> 把整个文件夹一起搬走，设置和进度就跟着走。
 
 ### 2. 选数据源
 
@@ -150,16 +155,17 @@ Etupirka 里**被删掉的游戏条目**，每日时长还留在库里，但游�
 ```
 etupirka2vnite.exe --selfcheck
 ```
-
 在 exe 旁生成 `selfcheck.txt`，写明程序目录、配置目录、各配置文件位置、是否可写、
 读到的数据源与条目统计。
 
 **Q：Windows 弹窗说「已保护你的电脑」？**
 exe 没有代码签名。点「更多信息 → 仍要运行」。
 
-**Q：exe 启动有点慢？**
-`--onefile` 每次启动都要把自己解包到系统临时目录。在意的话可以改成 `--onedir`
-（改 `etupirka2vnite.spec` 后重跑 `build.bat`）。
+**Q：exe 启动慢吗？**
+不慢。发布包用的是 **onedir** 模式（一个文件夹），启动是即时的。
+早期版本用 `--onefile`（单文件自解压），每次启动都要把自身解压到系统临时目录，
+既慢，又可能因解压被安全软件拦截而直接报
+`Failed to extract entry: VCRUNTIME140.dll.` —— 所以换掉了。
 
 **Q：提示「这个目录里没有 user.db」？**
 Etupirka 是绿色软件，`user.db` 和 `Etupirka.exe` 放在一起，选那个文件夹。
@@ -193,7 +199,14 @@ python -m unittest discover -s tests -t .
 build.bat
 ```
 
-会按需通过 pip 安装 PyInstaller，然后产出 `dist\etupirka2vnite.exe`。
+会按需通过 pip 安装 PyInstaller，然后产出：
+
+```
+dist\etupirka2vnite\                      程序目录（onedir，整个一起分发）
+dist\etupirka2vnite-<版本>-win64.zip      发布包（直接传 Release）
+```
+
+版本号自动取自 `app\__init__.py` 的 `__version__`。
 想换图标就把一个 `.ico` 命名为 `etupirka2vnite.ico` 放进本目录，重跑即可。
 
 ---
@@ -204,7 +217,7 @@ build.bat
 etupirka2vnite/
 ├─ etupirka2vnite.py     入口（默认启动界面，--selfcheck 走自检）
 ├─ app/
-│  ├─ paths.py           运行目录解析（兼容 PyInstaller onefile）
+│  ├─ paths.py           运行目录解析（兼容 PyInstaller 冻结模式）
 │  ├─ etupirka_db.py     定位 / 校验 / 只读读取 user.db
 │  ├─ model.py           中间数据模型
 │  ├─ vnite_payload.py   生成 Vnite 剪贴板 JSON + 复刻其校验规则
@@ -216,10 +229,11 @@ etupirka2vnite/
 │  ├─ selfcheck.py       打包后自检
 │  └─ gui.py             tkinter 界面
 ├─ tests/                269 项单元测试
-├─ build.bat             一键打包
-├─ etupirka2vnite.spec   PyInstaller 配置
-└─ dist/
-   └─ etupirka2vnite.exe
+├─ build.bat             一键打包（构建 + 压 zip）
+├─ etupirka2vnite.spec   PyInstaller 配置（onedir）
+└─ dist/                 构建产物，不提交
+   ├─ etupirka2vnite/              程序目录
+   └─ etupirka2vnite-<版本>-win64.zip
 ```
 
 想知道「为什么这么做」「某个字段怎么映射的」，看 `app/vnite_payload.py` 和
