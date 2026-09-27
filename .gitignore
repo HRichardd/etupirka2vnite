@@ -1,0 +1,25 @@
+__pycache__/
+*.py[cod]
+.testtmp/
+
+# 运行时状态（首次运行后会在程序目录生成）
+settings.json
+aliases.json
+progress.json
+error.log
+out/
+
+# 设计与验收记录（含真实游戏名、本地路径、真实数据规模等个人信息，不公开）
+DESIGN.md
+
+# 可选的自定义窗口图标
+*.ico
+
+# PyInstaller
+build/
+dist/
+*.manifest
+
+# 打包工具链（工程内安装，不污染全局 Python）
+.pylibs/
+.piptmp/
