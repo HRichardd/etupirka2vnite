@@ -4,4 +4,4 @@
 界面（阶段 1）会直接调用 :mod:`app.etupirka_db`。
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"

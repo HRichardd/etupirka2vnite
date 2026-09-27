@@ -31,8 +31,8 @@ Etupirka 的 `user.db` 全程以只读方式打开，不会被修改，也不会
 
 | 下载 | 形态 | 适合 |
 |---|---|---|
-| `etupirka2vnite-<版本>-win64.zip` | 文件夹版（onedir） | **推荐**。启动即时，不挑环境 |
-| `etupirka2vnite-<版本>-win64-onefile.zip` | 单文件版（onefile） | 只想要一个 exe，双击即用 |
+| `etupirka2vnite-<版本>-win64.zip` | 文件夹版（onedir），需解压 | **推荐**。启动即时，不挑环境 |
+| `etupirka2vnite-<版本>-win64-onefile.exe` | 单文件版（onefile），无需解压 | 只想要一个 exe，双击即用 |
 
 **文件夹版**：解压后双击里面的
 ```
@@ -40,8 +40,8 @@ etupirka2vnite\etupirka2vnite.exe
 ```
 > 整个文件夹要一起保留，exe 依赖同目录下的运行库文件。
 
-**单文件版**：解压出那个 `etupirka2vnite.exe` 就能直接双击。
-> 它每次启动会先把自身解压到 `%TEMP%` 再运行，所以启动比文件夹版慢几秒；
+**单文件版**：它下载下来就是 exe，直接双击。
+> 每次启动会先把自身解压到 `%TEMP%` 再运行，所以启动比文件夹版慢几秒；
 > 若所在环境限制临时目录写入（受限沙箱、部分企业管控策略），可能启动失败——
 > 那种情况下请改用文件夹版。
 
@@ -224,9 +224,13 @@ build.bat
 ```
 dist\onedir\etupirka2vnite\                        文件夹版程序目录
 dist\onefile\etupirka2vnite.exe                    单文件版 exe
-dist\etupirka2vnite-<版本>-win64.zip               文件夹版发布包（直接传 Release）
-dist\etupirka2vnite-<版本>-win64-onefile.zip       单文件版发布包（直接传 Release）
+dist\etupirka2vnite-<版本>-win64.zip               文件夹版发布包（传 Release）
+dist\etupirka2vnite-<版本>-win64-onefile.exe       单文件版发布包（传 Release）
 ```
+
+文件夹版是多文件，必须压成 zip；单文件版本就是一个 exe，直接以 `.exe` 发布
+（不要改名成 `.zip`，那会得到一个无法解压的"假 zip"）。
+`build.bat` 末尾会校验两个成品的魔数，类型不对就报错退出。
 
 版本号自动取自 `app\__init__.py` 的 `__version__`（同时写进 exe 的文件属性）。
 想换图标就把一个 `.ico` 命名为 `etupirka2vnite.ico` 放进本目录，重跑即可。
@@ -264,7 +268,7 @@ etupirka2vnite/
    ├─ onedir/etupirka2vnite/                        文件夹版
    ├─ onefile/etupirka2vnite.exe                    单文件版
    ├─ etupirka2vnite-<版本>-win64.zip
-   └─ etupirka2vnite-<版本>-win64-onefile.zip
+   └─ etupirka2vnite-<版本>-win64-onefile.exe
 ```
 
 想知道「为什么这么做」「某个字段怎么映射的」，看 `app/vnite_payload.py` 和

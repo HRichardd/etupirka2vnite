@@ -36,19 +36,28 @@ set "ETUPIRKA_ONEFILE="
 if errorlevel 1 goto :fail
 
 set "ZIPDIR=etupirka2vnite-!VERSION!-win64.zip"
-set "ZIPONE=etupirka2vnite-!VERSION!-win64-onefile.zip"
+set "EXEONE=etupirka2vnite-!VERSION!-win64-onefile.exe"
 
-echo [5/5] 打包发布文件
+echo [5/5] 准备发布文件
+rem 文件夹版必须压成 zip（多文件）；单文件版本身就是一个可执行文件，
+rem 直接以 .exe 发布——不能改名成 .zip，那会得到一个无法解压的"假 zip"。
 powershell -NoProfile -Command "Compress-Archive -Path 'dist\onedir\etupirka2vnite' -DestinationPath ('dist\' + '!ZIPDIR!') -Force"
 if errorlevel 1 goto :fail
 if exist "dist\onefile\etupirka2vnite.exe" (
-    powershell -NoProfile -Command "Copy-Item 'dist\onefile\etupirka2vnite.exe' ('dist\' + '!ZIPONE!') -Force"
+    powershell -NoProfile -Command "Copy-Item 'dist\onefile\etupirka2vnite.exe' ('dist\' + '!EXEONE!') -Force"
     if errorlevel 1 goto :fail
 )
 
 rem 清掉 PyInstaller 的中间缓存，只留成品
 if exist "dist\.work-onedir" rmdir /s /q "dist\.work-onedir"
 if exist "dist\.work-onefile" rmdir /s /q "dist\.work-onefile"
+
+rem 发布文件自检：校验魔数，防止"改名的 exe 冒充 zip"这类错配再次溜出去
+python -c "import sys,pathlib; z=pathlib.Path(sys.argv[1]).read_bytes()[:2]; e=pathlib.Path(sys.argv[2]).read_bytes()[:2]; print('   文件夹版 zip 魔数:', z.hex().upper()); print('   单文件版 exe 魔数:', e.hex().upper()); sys.exit(0 if (z==b'PK' and e==b'MZ') else 1)" "dist\!ZIPDIR!" "dist\!EXEONE!"
+if errorlevel 1 (
+    echo       错误：发布文件类型不对（zip 应为 PK 开头，exe 应为 MZ 开头）
+    goto :fail
+)
 
 echo.
 echo ============================================================
@@ -60,7 +69,7 @@ echo        入口     : dist\onedir\etupirka2vnite\etupirka2vnite.exe
 echo        发布文件 : dist\!ZIPDIR!
 echo.
 echo   [B] 单文件版（简单，双击即用）
-echo        发布文件 : dist\!ZIPONE!
+echo        发布文件 : dist\!EXEONE!
 if exist "dist\onefile\etupirka2vnite.exe" (
     echo        注意     : 单文件版每次启动会自解压到 %%TEMP%%，临时目录受限时可能启动失败
 ) else (
