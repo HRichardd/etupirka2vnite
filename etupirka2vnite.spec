@@ -1,21 +1,27 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""PyInstaller 打包配置（onedir、无控制台）。
+"""PyInstaller 打包配置（无控制台），支持 onedir 与 onefile 两种形态。
+
+直接构建某一个形态（默认 onedir）::
 
     python -m PyInstaller etupirka2vnite.spec --noconfirm
+    set ETUPIRKA_ONEFILE=1 && python -m PyInstaller etupirka2vnite.spec --noconfirm
 
-产出 ``dist/etupirka2vnite/`` 目录，入口是其中的 ``etupirka2vnite.exe``。
-把整个目录一起分发（或用 ``build.bat`` 打成的 zip）。
+一般不用手动跑，``build.bat`` 会依次构建两者并各自打包。
 
-**为什么用 onedir 而不是 onefile**：两者都能正常工作，**onefile 没有缺陷**——
-它每次启动把自身解压到 ``%TEMP%/_MEIxxxxxx`` 再运行，因此在临时目录写入受限的环境里
-会启动失败（曾误判为 exe 缺陷，实为受限沙箱拦截解压；在无限制环境下实测退出码 0）。
-onedir 完全不做自解包，启动即时、不依赖临时目录权限、触发杀软误报也更少，
-代价是分发时给的是文件夹（压成 zip 即可）。
+两种形态都能正常工作，**onefile 没有缺陷**，区别只在启动方式：
+
+- **onedir**（默认）产出 ``etupirka2vnite/`` 文件夹。不做自解包，启动即时、
+  不依赖临时目录权限、触发杀软误报也更少；代价是分发时要给整个文件夹。
+- **onefile**（``ETUPIRKA_ONEFILE=1``）产出单个 exe。每次启动先把自己解压到
+  ``%TEMP%/_MEIxxxxxx`` 再运行，因此启动慢一些；若所在环境限制临时目录写入
+  （受限沙箱、部分企业管控策略），会解压失败并报错退出。
+  （曾把这个现象误判为 exe 缺陷，实为受限沙箱拦截解压；无限制环境下实测退出码 0。）
 
 程序目录里若存在 ``etupirka2vnite.ico``，会自动用作 exe 图标；没有就用默认图标。
 """
 
 from pathlib import Path
+import os
 import re
 
 from PyInstaller.utils.hooks import collect_submodules
@@ -23,11 +29,14 @@ from PyInstaller.utils.hooks import collect_submodules
 PROJECT = Path(SPECPATH).resolve()
 ICON = PROJECT / "etupirka2vnite.ico"
 
+# 真值表：1 / true / yes / on 都算开启
+ONEFILE = os.environ.get("ETUPIRKA_ONEFILE", "").strip().lower() in ("1", "true", "yes", "on")
+
 
 def app_version():
     """从 app/__init__.py 读 __version__，作为唯一版本来源。
 
-    用于 Windows 文件属性里的「文件版本 / 产品版本」，也用于 build.bat 的 zip 命名。
+    用于 Windows 文件属性里的「文件版本 / 产品版本」，也用于 build.bat 的产物命名。
     """
     match = re.search(
         r'^__version__\s*=\s*["\']([^"\']+)["\']',
@@ -48,7 +57,7 @@ def write_version_file():
     """生成 PyInstaller 的版本资源文件，嵌入 exe 属性里的版本号。
 
     直接给 ``version=`` 传字符串会被当成文件路径，所以这里自己生成一个。
-    写到 build/ 下（该目录是构建缓存，不提交）。
+    放在 build/ 下（构建缓存，不提交；构建结束会被 PyInstaller 清掉，无所谓）。
     """
     build_dir = PROJECT / "build"
     build_dir.mkdir(exist_ok=True)
@@ -105,11 +114,8 @@ a = Analysis(
 
 pyz = PYZ(a.pure)
 
-exe = EXE(
-    pyz,
-    a.scripts,
-    [],
-    exclude_binaries=True,
+# 共用的 EXE 参数
+_exe_kwargs = dict(
     name="etupirka2vnite",
     debug=False,
     bootloader_ignore_signals=False,
@@ -120,11 +126,31 @@ exe = EXE(
     version=VERSION_FILE,
 )
 
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.datas,
-    strip=False,
-    upx=False,
-    name="etupirka2vnite",
-)
+if ONEFILE:
+    # 单文件：把 binaries/datas 一并塞进 EXE，不做 COLLECT
+    exe = EXE(
+        pyz,
+        a.scripts,
+        a.binaries,
+        a.datas,
+        [],
+        runtime_tmpdir=None,
+        **_exe_kwargs,
+    )
+else:
+    # 文件夹：EXE 只带脚本，依赖交给 COLLECT 放到 _internal/
+    exe = EXE(
+        pyz,
+        a.scripts,
+        [],
+        exclude_binaries=True,
+        **_exe_kwargs,
+    )
+    coll = COLLECT(
+        exe,
+        a.binaries,
+        a.datas,
+        strip=False,
+        upx=False,
+        name="etupirka2vnite",
+    )

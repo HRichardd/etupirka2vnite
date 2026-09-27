@@ -27,16 +27,26 @@ Etupirka 的 `user.db` 全程以只读方式打开，不会被修改，也不会
 
 ### 1. 拿一份程序
 
-到 [Releases](../../releases) 下载 `etupirka2vnite-<版本>-win64.zip`，
-**完整解压**后双击里面的：
+到 [Releases](../../releases) 下载任一形态，**两者功能完全相同**，挑一个就行：
 
+| 下载 | 形态 | 适合 |
+|---|---|---|
+| `etupirka2vnite-<版本>-win64.zip` | 文件夹版（onedir） | **推荐**。启动即时，不挑环境 |
+| `etupirka2vnite-<版本>-win64-onefile.zip` | 单文件版（onefile） | 只想要一个 exe，双击即用 |
+
+**文件夹版**：解压后双击里面的
 ```
 etupirka2vnite\etupirka2vnite.exe
 ```
-
 > 整个文件夹要一起保留，exe 依赖同目录下的运行库文件。
-> 想放桌面就右键 exe → 发送到 → 桌面快捷方式。配置存在 exe 同级目录，
-> 把整个文件夹一起搬走，设置和进度就跟着走。
+
+**单文件版**：解压出那个 `etupirka2vnite.exe` 就能直接双击。
+> 它每次启动会先把自身解压到 `%TEMP%` 再运行，所以启动比文件夹版慢几秒；
+> 若所在环境限制临时目录写入（受限沙箱、部分企业管控策略），可能启动失败——
+> 那种情况下请改用文件夹版。
+
+两种形态都可以放桌面：右键 exe → 发送到 → 桌面快捷方式。配置存在 exe 同级目录，
+把程序（文件夹版则连同整个文件夹）一起搬走，设置和进度就跟着走。
 
 ### 2. 选数据源
 
@@ -209,15 +219,24 @@ python -m unittest discover -s tests -t .
 build.bat
 ```
 
-会按需通过 pip 安装 PyInstaller，然后产出：
+会按需通过 pip 安装 PyInstaller，然后**一次产出两种形态**：
 
 ```
-dist\etupirka2vnite\                      程序目录（onedir，整个一起分发）
-dist\etupirka2vnite-<版本>-win64.zip      发布包（直接传 Release）
+dist\onedir\etupirka2vnite\                        文件夹版程序目录
+dist\onefile\etupirka2vnite.exe                    单文件版 exe
+dist\etupirka2vnite-<版本>-win64.zip               文件夹版发布包（直接传 Release）
+dist\etupirka2vnite-<版本>-win64-onefile.zip       单文件版发布包（直接传 Release）
 ```
 
-版本号自动取自 `app\__init__.py` 的 `__version__`。
+版本号自动取自 `app\__init__.py` 的 `__version__`（同时写进 exe 的文件属性）。
 想换图标就把一个 `.ico` 命名为 `etupirka2vnite.ico` 放进本目录，重跑即可。
+
+单独构建某一形态：
+
+```
+python -m PyInstaller etupirka2vnite.spec --noconfirm                          # onedir
+set ETUPIRKA_ONEFILE=1 && python -m PyInstaller etupirka2vnite.spec --noconfirm # onefile
+```
 
 ---
 
@@ -239,11 +258,13 @@ etupirka2vnite/
 │  ├─ selfcheck.py       打包后自检
 │  └─ gui.py             tkinter 界面
 ├─ tests/                269 项单元测试
-├─ build.bat             一键打包（构建 + 压 zip）
-├─ etupirka2vnite.spec   PyInstaller 配置（onedir）
+├─ build.bat             一键打包（一次产出两种形态）
+├─ etupirka2vnite.spec   PyInstaller 配置（onedir / onefile 由环境变量切换）
 └─ dist/                 构建产物，不提交
-   ├─ etupirka2vnite/              程序目录
-   └─ etupirka2vnite-<版本>-win64.zip
+   ├─ onedir/etupirka2vnite/                        文件夹版
+   ├─ onefile/etupirka2vnite.exe                    单文件版
+   ├─ etupirka2vnite-<版本>-win64.zip
+   └─ etupirka2vnite-<版本>-win64-onefile.zip
 ```
 
 想知道「为什么这么做」「某个字段怎么映射的」，看 `app/vnite_payload.py` 和
