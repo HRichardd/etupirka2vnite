@@ -6,10 +6,11 @@
 产出 ``dist/etupirka2vnite/`` 目录，入口是其中的 ``etupirka2vnite.exe``。
 把整个目录一起分发（或用 ``build.bat`` 打成的 zip）。
 
-**为什么用 onedir 而不是 onefile**：onefile 每次启动都要把自身解压到
-``%TEMP%/_MEIxxxxxx``，实测在部分机器上会因解压被拦截而直接失败
-（报 ``Failed to extract entry: VCRUNTIME140.dll.``），且启动明显更慢。
-onedir 不做自解包，启动即时、不吃临时目录权限，分发时压成 zip 即可。
+**为什么用 onedir 而不是 onefile**：两者都能正常工作，**onefile 没有缺陷**——
+它每次启动把自身解压到 ``%TEMP%/_MEIxxxxxx`` 再运行，因此在临时目录写入受限的环境里
+会启动失败（曾误判为 exe 缺陷，实为受限沙箱拦截解压；在无限制环境下实测退出码 0）。
+onedir 完全不做自解包，启动即时、不依赖临时目录权限、触发杀软误报也更少，
+代价是分发时给的是文件夹（压成 zip 即可）。
 
 程序目录里若存在 ``etupirka2vnite.ico``，会自动用作 exe 图标；没有就用默认图标。
 """
